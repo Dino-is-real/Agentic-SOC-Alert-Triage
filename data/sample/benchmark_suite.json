@@ -1,0 +1,137 @@
+[
+  {
+    "id": "scenario-001",
+    "title": "Cobalt Strike C2 Beaconing via Encoded PowerShell",
+    "ground_truth_verdict": "malicious",
+    "ground_truth_domains": ["endpoint", "malware", "threat_intel"],
+    "ground_truth_mitre": ["T1059.001", "T1071.001"],
+    "raw_payload": {
+      "sourcetype": "WinEventLog:Security",
+      "host": "FINANCE-PC-01",
+      "CommandLine": "powershell.exe -enc JABhID0A... -WindowStyle Hidden",
+      "process_name": "powershell.exe",
+      "user": "alice_finance",
+      "severity": "critical",
+      "src_ip": "185.220.101.5",
+      "dest_port": 443
+    }
+  },
+  {
+    "id": "scenario-002",
+    "title": "Automated SSH Brute Force Against Jump Host",
+    "ground_truth_verdict": "malicious",
+    "ground_truth_domains": ["network", "identity", "threat_intel"],
+    "ground_truth_mitre": ["T1110.001", "T1046"],
+    "raw_payload": {
+      "rule": {"level": 10, "description": "Multiple SSH authentication failures from external IP", "groups": ["sshd"]},
+      "agent": {"id": "001", "name": "bastion-host", "ip": "10.0.0.1"},
+      "data": {
+        "srcip": "194.26.29.112",
+        "srcport": "48921",
+        "dstport": "22",
+        "protocol": "TCP",
+        "user": "root",
+        "auth_status": "FAILED"
+      }
+    }
+  },
+  {
+    "id": "scenario-003",
+    "title": "Unauthorized AWS S3 Bucket Public ACL Policy Mutation",
+    "ground_truth_verdict": "malicious",
+    "ground_truth_domains": ["cloud", "identity"],
+    "ground_truth_mitre": ["T1078.004"],
+    "raw_payload": {
+      "source_format": "synthetic",
+      "signature": "AWS S3 Public Bucket Exposure",
+      "raw_severity": "critical",
+      "cloud": {
+        "cloud_provider": "AWS",
+        "account_id": "123456789012",
+        "region": "us-east-1",
+        "resource_arn": "arn:aws:s3:::customer-pii-records",
+        "event_name": "PutBucketPolicy"
+      },
+      "identity": {
+        "username": "unverified_contractor",
+        "auth_status": "SUCCESS",
+        "is_privileged": true
+      }
+    }
+  },
+  {
+    "id": "scenario-004",
+    "title": "Known Ransomware Binary Execution Attempt",
+    "ground_truth_verdict": "malicious",
+    "ground_truth_domains": ["endpoint", "malware", "threat_intel"],
+    "ground_truth_mitre": ["T1486"],
+    "raw_payload": {
+      "source_format": "synthetic",
+      "signature": "LockBit Ransomware Dropper Hash Match",
+      "raw_severity": "critical",
+      "endpoint": {
+        "hostname": "DB-SERVER-03",
+        "process_name": "svchost_updater.exe",
+        "sha256": "44d88612fea8a8f36de82e1278abb02f",
+        "file_path": "C:\\Windows\\Temp\\svchost_updater.exe"
+      }
+    }
+  },
+  {
+    "id": "scenario-005",
+    "title": "SYN Flood DDoS Attack Flow",
+    "ground_truth_verdict": "malicious",
+    "ground_truth_domains": ["network"],
+    "ground_truth_mitre": ["T1498"],
+    "raw_payload": {
+      "Dst Port": 80,
+      "Flow Duration": 2500000,
+      "Tot Fwd Pkts": 850,
+      "Tot Bwd Pkts": 10,
+      "TotLen Fwd Pkts": 45000.0,
+      "TotLen Bwd Pkts": 400.0,
+      "Protocol": 6,
+      "Label": "DDoS attacks-LOIC-HTTP"
+    }
+  },
+  {
+    "id": "scenario-006",
+    "title": "Legitimate Automated CI/CD Terraform Deployment",
+    "ground_truth_verdict": "benign",
+    "ground_truth_domains": ["cloud"],
+    "ground_truth_mitre": [],
+    "raw_payload": {
+      "source_format": "synthetic",
+      "signature": "Automated Cloud Deployment Pipeline",
+      "raw_severity": "low",
+      "cloud": {
+        "cloud_provider": "AWS",
+        "account_id": "123456789012",
+        "event_name": "AssumeRole"
+      },
+      "identity": {
+        "username": "terraform-service-account",
+        "auth_status": "SUCCESS"
+      }
+    }
+  },
+  {
+    "id": "scenario-007",
+    "title": "Benign Employee VPN Sign-In with Valid MFA",
+    "ground_truth_verdict": "benign",
+    "ground_truth_domains": ["identity"],
+    "ground_truth_mitre": [],
+    "raw_payload": {
+      "source_format": "synthetic",
+      "signature": "Successful Corporate VPN Authentication",
+      "raw_severity": "low",
+      "identity": {
+        "username": "bob_engineering",
+        "auth_status": "SUCCESS",
+        "mfa_used": true,
+        "src_geo_country": "United States",
+        "src_geo_city": "Austin"
+      }
+    }
+  }
+]

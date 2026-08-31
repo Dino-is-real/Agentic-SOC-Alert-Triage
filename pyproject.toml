@@ -1,0 +1,67 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "adaptive-soc"
+version = "0.1.0"
+description = "Adaptive Trust-Aware Multi-Agent Framework for Autonomous SOC Alert Triage and Incident Response"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+    { name = "SOC Research Team", email = "research@adaptive-soc.local" }
+]
+dependencies = [
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.28.0",
+    "pydantic>=2.6.0",
+    "pydantic-settings>=2.2.0",
+    "langgraph>=0.0.30",
+    "scikit-learn>=1.4.0",
+    "numpy>=1.26.0",
+    "scipy>=1.12.0",
+    "sqlalchemy>=2.0.28",
+    "alembic>=1.13.1",
+    "pgvector>=0.2.5",
+    "asyncpg>=0.29.0",
+    "httpx>=0.27.0",
+    "redis>=5.0.3",
+    "python-multipart>=0.0.9",
+    "pyjwt>=2.8.0",
+    "rich>=13.7.1",
+    "python-dotenv>=1.0.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.1.0",
+    "pytest-asyncio>=0.23.5",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.3.0",
+    "mypy>=1.9.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "B", "UP"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q --strict-markers"
+testpaths = ["tests"]
+asyncio_mode = "auto"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
+
+[tool.mypy]
+python_version = "3.11"
+strict = false
+ignore_missing_imports = true
+warn_unused_ignores = true
+warn_redundant_casts = true
