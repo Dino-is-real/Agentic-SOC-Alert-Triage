@@ -2,7 +2,7 @@
 import math
 from typing import Optional
 from src.domain.enums import AgentDomain, AgentVerdict
-from src.domain.models import AgentFinding, ConflictDetail, ConsensusAssessment, MITRETechnique
+from src.domain.models import AgentFinding, ConflictDetail, ConsensusAssessment
 
 
 class ConsensusEngine:
@@ -10,9 +10,9 @@ class ConsensusEngine:
 
     VERDICT_SCORES = {
         AgentVerdict.MALICIOUS: 1.0,
-        AgentVerdict.SUSPICIOUS: 0.5,
+        AgentVerdict.SUSPICIOUS: 0.70,
+        AgentVerdict.INSUFFICIENT_DATA: 0.40,
         AgentVerdict.BENIGN: 0.0,
-        AgentVerdict.INSUFFICIENT_DATA: 0.25,
     }
 
     def compute_consensus(self, findings: list[AgentFinding]) -> ConsensusAssessment:
@@ -31,15 +31,20 @@ class ConsensusEngine:
         # 1. Weighted Average Score
         weighted_mean = sum(w * s for w, s in zip(weights, scores)) / sum_weights
 
-        # 2. Inter-Agent Variance & Contradiction Penalty
+        # 2. Inter-Agent Variance & True Polarization Contradiction
         variance = sum(w * ((s - weighted_mean) ** 2) for w, s in zip(weights, scores)) / sum_weights
         std_dev = math.sqrt(variance)
-        contradiction_penalty = min(1.0, 2.0 * std_dev)
 
-        # 3. Detect Explicit High-Confidence Conflict
-        has_malicious = any(f.verdict == AgentVerdict.MALICIOUS and f.confidence >= 0.70 for f in findings)
-        has_benign = any(f.verdict == AgentVerdict.BENIGN and f.confidence >= 0.70 for f in findings)
-        has_conflict = has_malicious and has_benign or contradiction_penalty >= 0.40
+        has_malicious = any(f.verdict == AgentVerdict.MALICIOUS and f.confidence >= 0.65 for f in findings)
+        has_benign = any(f.verdict == AgentVerdict.BENIGN and f.confidence >= 0.65 for f in findings)
+
+        # Severe polarization only when one agent claims Benign and another claims Malicious
+        if has_malicious and has_benign:
+            contradiction_penalty = min(0.80, max(0.45, 2.0 * std_dev))
+            has_conflict = True
+        else:
+            contradiction_penalty = min(0.20, std_dev * 0.5)
+            has_conflict = False
 
         conflict_detail: Optional[ConflictDetail] = None
         if has_conflict:
@@ -50,17 +55,17 @@ class ConsensusEngine:
                 disagreement_severity=round(contradiction_penalty, 4),
             )
 
-        # 4. Uncertainty Factor Deduction
+        # 3. Uncertainty Factor Deduction
         total_uncertainties = sum(len(f.uncertainty_factors) for f in findings)
-        mean_uncertainty_ratio = min(1.0, total_uncertainties / (M * 2.0))
+        mean_uncertainty_ratio = min(1.0, total_uncertainties / (M * 3.0))
 
-        # 5. Base Consensus Computation
+        # 4. Base Consensus Computation
         mean_confidence = sum(weights) / M
         if M == 1:
             # Single specialist: 10% penalty for lack of multi-agent corroboration
-            consensus_score = mean_confidence * (1.0 - 0.5 * mean_uncertainty_ratio) * 0.90
+            consensus_score = mean_confidence * (1.0 - 0.3 * mean_uncertainty_ratio) * 0.90
         else:
-            consensus_score = mean_confidence * (1.0 - contradiction_penalty) * (1.0 - 0.5 * mean_uncertainty_ratio)
+            consensus_score = mean_confidence * (1.0 - contradiction_penalty) * (1.0 - 0.3 * mean_uncertainty_ratio)
 
         consensus_score = max(0.0, min(1.0, consensus_score))
 

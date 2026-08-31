@@ -45,7 +45,7 @@ class HistoricalIncidentMemory:
         seeds = [
             (
                 "Historical Scenario 101: Cobalt Strike C2 PowerShell Beaconing",
-                "powershell cmd malicious c2 beacon t1059.001 high 185.220.101.5",
+                "powershell cmd CommandLine WinEventLog Security 185.220.101.5 malicious c2 beacon t1059.001 critical 443",
                 AgentVerdict.MALICIOUS,
                 0.88,
                 ApprovalStatus.APPROVED,
@@ -54,7 +54,7 @@ class HistoricalIncidentMemory:
             ),
             (
                 "Historical Scenario 102: SSH Brute Force Against Jump Host",
-                "auth ssh failed brute force root t1110.001 high 194.26.29.112",
+                "auth ssh failed brute force root t1110.001 high 194.26.29.112 wazuh port 22 tcp",
                 AgentVerdict.MALICIOUS,
                 0.82,
                 ApprovalStatus.APPROVED,
@@ -63,7 +63,7 @@ class HistoricalIncidentMemory:
             ),
             (
                 "Historical Scenario 103: Automated Terraform CI/CD Deployment",
-                "cloud aws iam assumerole s3 deploy benign t1078.004 low",
+                "cloud aws iam assumerole s3 deploy benign t1078.004 low terraform",
                 AgentVerdict.BENIGN,
                 0.92,
                 ApprovalStatus.APPROVED,
@@ -71,13 +71,40 @@ class HistoricalIncidentMemory:
                 "Verified legitimate scheduled deployment.",
             ),
             (
-                "Historical Scenario 104: Ransomware Payload Dropper",
-                "malware sha256 44d88612fea8a8f36de82e1278abb02f ransomware trojan critical",
+                "Historical Scenario 104: Ransomware Payload Dropper Execution",
+                "malware sha256 44d88612fea8a8f36de82e1278abb02f svchost_updater ransomware lockbit critical dropper",
                 AgentVerdict.MALICIOUS,
                 0.95,
                 ApprovalStatus.APPROVED,
                 "Isolate Host & Kill Process Tree",
                 "Binary terminated prior to volume shadow copy deletion.",
+            ),
+            (
+                "Historical Scenario 105: High-Volume SYN Flood DDoS Attack",
+                "network ddos syn flood port 80 traffic attack packet high flow duration",
+                AgentVerdict.MALICIOUS,
+                0.86,
+                ApprovalStatus.APPROVED,
+                "Activate Anti-DDoS Rate Limiting & Filter Flow",
+                "Traffic scrubber mitigated volumetric flood.",
+            ),
+            (
+                "Historical Scenario 106: Unauthorized AWS S3 Bucket Public ACL Policy Mutation",
+                "cloud aws s3 bucket putbucketpolicy unverified contractor privileged critical",
+                AgentVerdict.MALICIOUS,
+                0.84,
+                ApprovalStatus.APPROVED,
+                "Restrict S3 Public Access & Revoke IAM Credentials",
+                "Bucket ACL reverted to private; IAM access key deleted.",
+            ),
+            (
+                "Historical Scenario 107: Benign Employee VPN Sign-In",
+                "identity vpn auth success mfa true bob engineering united states low",
+                AgentVerdict.BENIGN,
+                0.89,
+                ApprovalStatus.APPROVED,
+                "No Action Required (Valid Multi-Factor Authentication)",
+                "Standard authorized employee VPN session.",
             ),
         ]
 
@@ -108,7 +135,7 @@ class HistoricalIncidentMemory:
         alert: NormalizedAlert,
         consensus: Optional[ConsensusAssessment] = None,
         top_k: int = 3,
-        similarity_threshold: float = 0.50,
+        similarity_threshold: float = 0.25,
     ) -> tuple[list[HistoricalCase], float]:
         """Retrieves top-K nearest historical incidents and computes H factor."""
         if not self._records:
@@ -120,7 +147,6 @@ class HistoricalIncidentMemory:
 
         scored_records: list[tuple[float, HistoricalIncidentRecord]] = []
         for rec in self._records:
-            # Cosine similarity
             dot_product = np.dot(query_emb, rec.embedding)
             norm_q = np.linalg.norm(query_emb)
             norm_r = np.linalg.norm(rec.embedding)

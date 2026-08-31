@@ -179,10 +179,12 @@ export const App: React.FC = () => {
               approval_request: { ...latestDossier.approval_request, status: 'APPROVED' },
             });
           }
+          return execData;
         }
       }
     } catch (e) {
       console.error('Failed to approve playbook:', e);
+      return null;
     } finally {
       setIsLoading(false);
     }
