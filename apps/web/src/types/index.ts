@@ -125,3 +125,77 @@ export interface InvestigationDossier {
   approval_request: ApprovalRequest;
   audit_timeline: Array<{ stage: string; [key: string]: any }>;
 }
+
+export interface AnalyticsData {
+  total_runs: number;
+  executive_kpis: {
+    total_runs: number;
+    malicious_count: number;
+    suspicious_count: number;
+    benign_count: number;
+    auto_suggest_count: number;
+    escalated_count: number;
+    auto_suggest_rate_pct: number;
+    escalated_rate_pct: number;
+    mean_trust_score: number;
+    median_trust_score: number;
+    std_dev_trust: number;
+    avg_agents_per_run: number;
+    mean_routing_latency_ms: number;
+    mean_pipeline_latency_ms: number;
+    approvals_summary: {
+      approved: number;
+      rejected: number;
+      pending: number;
+    };
+  };
+  trust_distribution: {
+    bins: Array<{ range: string; count: number; pct: number }>;
+    threshold: number;
+    reason_codes: Record<string, number>;
+    ece: number;
+    brier_score: number;
+  };
+  domain_routing_analytics: {
+    domain_names: string[];
+    domain_activation_counts: Record<string, number>;
+    domain_activation_pct: Record<string, number>;
+    avg_domain_confidences: Record<string, number>;
+    co_activation_matrix: number[][];
+  };
+  mitre_attack_analytics: {
+    technique_frequencies: Array<{
+      technique_id: string;
+      name: string;
+      tactic: string;
+      count: number;
+    }>;
+    tactic_distribution: Record<string, number>;
+  };
+  latency_telemetry: {
+    stage_breakdown_ms: {
+      routing: number;
+      specialist_analysis: number;
+      synthesis: number;
+      trust_gate: number;
+      playbook_generation: number;
+    };
+    run_timeline: Array<{
+      run_index: number;
+      incident_id: string;
+      signature: string;
+      timestamp: string;
+      latency_ms: number;
+      trust_score: number;
+      decision: string;
+      verdict: string;
+      domains_count: number;
+      severity: string;
+      source_format: string;
+    }>;
+  };
+  containment_action_analytics: {
+    action_types_distribution: Record<string, number>;
+  };
+  incident_runs: Array<any>;
+}

@@ -4,8 +4,9 @@ import { OverviewView } from './components/OverviewView';
 import { AlertQueueView } from './components/AlertQueueView';
 import { InvestigationView } from './components/InvestigationView';
 import { ApprovalQueueView } from './components/ApprovalQueueView';
+import { AnalyticsView } from './components/AnalyticsView';
 import { EvaluationBenchmarksView } from './components/EvaluationBenchmarksView';
-import { InvestigationDossier, ApprovalRequest } from './types';
+import { InvestigationDossier, ApprovalRequest, AnalyticsData } from './types';
 
 export const App: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<string>('overview');
@@ -14,7 +15,9 @@ export const App: React.FC = () => {
   const [pendingApprovals, setPendingApprovals] = useState<ApprovalRequest[]>([]);
   const [executionLogs, setExecutionLogs] = useState<any[]>([]);
   const [metrics, setMetrics] = useState<any>(null);
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isSeeding, setIsSeeding] = useState<boolean>(false);
 
   // Initial seed alerts
   useEffect(() => {
@@ -109,7 +112,16 @@ export const App: React.FC = () => {
     setAlerts(initialAlerts);
     // Triage the first alert by default to populate state
     handleTriageAlert(initialAlerts[0].raw_payload);
+    fetchAnalytics();
   }, []);
+
+  // Fetch analytics when switching to analytics or overview tabs
+  useEffect(() => {
+    if (currentTab === 'analytics' || currentTab === 'overview') {
+      fetchAnalytics();
+      fetchMetrics();
+    }
+  }, [currentTab]);
 
   const handleTriageAlert = async (payload: any) => {
     setIsLoading(true);
@@ -129,6 +141,7 @@ export const App: React.FC = () => {
           });
         }
         fetchMetrics();
+        fetchAnalytics();
       }
     } catch (e) {
       console.error('Failed to run triage:', e);
@@ -146,6 +159,51 @@ export const App: React.FC = () => {
       }
     } catch (e) {
       console.error('Failed to fetch metrics:', e);
+    }
+  };
+
+  const fetchAnalytics = async () => {
+    try {
+      const resp = await fetch('/api/v1/metrics/analytics');
+      if (resp.ok) {
+        const data: AnalyticsData = await resp.json();
+        setAnalytics(data);
+      }
+    } catch (e) {
+      console.error('Failed to fetch analytics telemetry:', e);
+    }
+  };
+
+  const handleBatchSeed = async () => {
+    setIsSeeding(true);
+    try {
+      const resp = await fetch('/api/v1/metrics/batch-seed', {
+        method: 'POST',
+      });
+      if (resp.ok) {
+        await fetchAnalytics();
+        await fetchMetrics();
+      }
+    } catch (e) {
+      console.error('Failed to seed batch benchmark corpus:', e);
+    } finally {
+      setIsSeeding(false);
+    }
+  };
+
+  const handleSelectIncident = async (incidentId: string) => {
+    setIsLoading(true);
+    try {
+      const resp = await fetch(`/api/v1/incidents/${incidentId}`);
+      if (resp.ok) {
+        const data: InvestigationDossier = await resp.json();
+        setLatestDossier(data);
+        setCurrentTab('investigation');
+      }
+    } catch (e) {
+      console.error('Failed to fetch incident dossier:', e);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -179,6 +237,7 @@ export const App: React.FC = () => {
               approval_request: { ...latestDossier.approval_request, status: 'APPROVED' },
             });
           }
+          fetchAnalytics();
           return execData;
         }
       }
@@ -202,6 +261,7 @@ export const App: React.FC = () => {
         }),
       });
       setPendingApprovals((prev) => prev.filter((p) => p.request_id !== requestId));
+      fetchAnalytics();
     } catch (e) {
       console.error('Failed to reject playbook:', e);
     }
@@ -284,6 +344,16 @@ export const App: React.FC = () => {
             onReject={handleRejectPlaybook}
             isExecuting={isLoading}
             executionLogs={executionLogs}
+          />
+        )}
+
+        {currentTab === 'analytics' && (
+          <AnalyticsView
+            analytics={analytics}
+            onRefresh={fetchAnalytics}
+            onBatchSeed={handleBatchSeed}
+            onSelectIncident={handleSelectIncident}
+            isSeeding={isSeeding}
           />
         )}
 

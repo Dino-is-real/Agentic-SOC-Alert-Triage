@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, Activity, ListOrdered, CheckSquare, BarChart3 } from 'lucide-react';
+import { Shield, Activity, ListOrdered, CheckSquare, BarChart3, LineChart } from 'lucide-react';
 
 interface NavbarProps {
   currentTab: string;
@@ -13,6 +13,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab, pendi
     { id: 'alerts', label: 'Alert Queue', icon: ListOrdered },
     { id: 'investigation', label: 'Investigation Dossier', icon: Shield },
     { id: 'approvals', label: 'Human Approval Gate', icon: CheckSquare, badge: pendingCount },
+    { id: 'analytics', label: 'SOC Analytics', icon: LineChart },
     { id: 'benchmarks', label: 'Research Evaluation', icon: BarChart3 },
   ];
 
