@@ -169,5 +169,103 @@ adaptive-soc/
 - **Phase 12:** 4-Way Baseline Evaluation & Research Benchmark Suite
 - **Phase 13:** Security Hardening, End-to-End Safety Tests & Docker Orchestration
 - **Phase 14:** Final Documentation, Research Paper Data Exports & Demo Packaging
-#   A g e n t i c - S O C - A l e r t - T r i a g e  
- 
+
+---
+
+## 8. Getting Started & Setup Guide
+
+### 8.1 Prerequisites
+- **Python:** 3.11 or higher
+- **Node.js:** 18+ and npm
+- **Docker Desktop** *(Optional)*: Required only if running persistent PostgreSQL + pgvector and Redis locally.
+
+---
+
+### 8.2 Step 1: Clone the Repository
+```bash
+git clone https://github.com/Dino-is-real/Agentic-SOC-Alert-Triage.git
+cd Agentic-SOC-Alert-Triage
+```
+
+---
+
+### 8.3 Step 2: Environment Configuration
+Create your local environment file from the template:
+
+```bash
+# Windows (PowerShell)
+Copy-Item .env.example .env
+
+# Linux / macOS
+cp .env.example .env
+```
+
+#### What needs to be configured in `.env`?
+| Use Case | Key Settings in `.env` | Required Keys |
+| :--- | :--- | :--- |
+| **Offline / Zero-Config (Default)** | `LLM_PROVIDER=mock`<br>`ENABLE_MOCK_INTEGRATIONS=true` | **None!** Works immediately with deterministic mock specialists. |
+| **Groq Cloud (Fast Llama-3)** | `LLM_PROVIDER=groq`<br>`GROQ_MODEL=openai/gpt-oss-120b` | `GROQ_API_KEY=gsk_...` |
+| **OpenAI (GPT-4o)** | `LLM_PROVIDER=openai`<br>`OPENAI_MODEL=gpt-4o-mini` | `OPENAI_API_KEY=sk-...` |
+| **Local Private Ollama** | `LLM_PROVIDER=ollama`<br>`LOCAL_OLLAMA_URL=http://localhost:11434` | Running Ollama instance with `ollama pull llama3.1` |
+| **Live Threat Intel APIs (Optional)** | `ENABLE_MOCK_INTEGRATIONS=false` | `VIRUSTOTAL_API_KEY=...`<br>`ABUSEIPDB_API_KEY=...`<br>`SHODAN_API_KEY=...` |
+
+---
+
+### 8.4 Step 3: Backend Setup & Launch
+
+1. **Create and activate a virtual environment:**
+   ```bash
+   # Windows (PowerShell)
+   python -m venv .venv
+   .venv\Scripts\Activate.ps1
+
+   # Linux / macOS
+   python3 -m venv .venv
+   source .venv/bin/activate
+   ```
+
+2. **Install Python dependencies:**
+   ```bash
+   pip install -e .
+   ```
+
+3. *(Optional)* **Start Database & Cache containers:**
+   ```bash
+   docker compose up -d postgres redis
+   ```
+
+4. **Start the FastAPI Backend Server:**
+   ```bash
+   uvicorn apps.api.main:app --reload --port 8000
+   ```
+   - **REST API:** `http://localhost:8000`
+   - **Interactive Swagger Docs:** `http://localhost:8000/api/v1/docs`
+   - **Healthcheck:** `http://localhost:8000/health`
+
+---
+
+### 8.5 Step 4: Frontend Dashboard Setup & Launch
+
+Open a separate terminal window:
+
+```bash
+cd apps/web
+npm install
+npm run dev
+```
+
+The SOC Analyst UI will be live at:
+**`http://localhost:5173`** (automatically proxies API requests to port `8000`).
+
+---
+
+### 8.6 Step 5: Verification & Testing
+
+- **Run Automated Test Suite:**
+  ```bash
+  pytest
+  ```
+- **Generate Research Metrics & Excel Analytics Report:**
+  ```bash
+  python scripts/generate_excel_report.py
+  ```
