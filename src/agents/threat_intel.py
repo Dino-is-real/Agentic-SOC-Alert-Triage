@@ -4,9 +4,10 @@ from uuid import uuid4
 from src.domain.enums import AgentDomain, AgentVerdict, EvidenceType
 from src.domain.models import NormalizedAlert, AgentFinding, Evidence
 from src.agents.base import SpecialistAgent
+from src.core.config import settings
 from src.integrations.base import ThreatIntelProvider
-from src.integrations.virustotal import MockVirusTotalProvider
-from src.integrations.shodan import MockShodanProvider
+from src.integrations.virustotal import VirusTotalProvider, MockVirusTotalProvider
+from src.integrations.shodan import ShodanProvider, MockShodanProvider
 from src.integrations.llm import BaseLLMProvider, get_llm_provider
 
 
@@ -20,8 +21,20 @@ class ThreatIntelSpecialistAgent(SpecialistAgent):
         llm: Optional[BaseLLMProvider] = None,
     ):
         super().__init__(domain=AgentDomain.THREAT_INTEL)
-        self.vt = vt_provider or MockVirusTotalProvider()
-        self.shodan = shodan_provider or MockShodanProvider()
+        if vt_provider:
+            self.vt = vt_provider
+        elif settings.VIRUSTOTAL_API_KEY and settings.VIRUSTOTAL_API_KEY.strip():
+            self.vt = VirusTotalProvider()
+        else:
+            self.vt = MockVirusTotalProvider()
+
+        if shodan_provider:
+            self.shodan = shodan_provider
+        elif settings.SHODAN_API_KEY and settings.SHODAN_API_KEY.strip():
+            self.shodan = ShodanProvider()
+        else:
+            self.shodan = MockShodanProvider()
+
         self.llm = llm or get_llm_provider()
 
     async def analyze(

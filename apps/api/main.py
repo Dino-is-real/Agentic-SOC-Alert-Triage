@@ -47,6 +47,13 @@ def create_app() -> FastAPI:
             "trust_gate_threshold": settings.TRUST_DEFAULT_THRESHOLD,
         }
 
+    import os
+    from fastapi.staticfiles import StaticFiles
+
+    dist_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "web", "dist"))
+    if os.path.exists(dist_dir):
+        app.mount("/", StaticFiles(directory=dist_dir, html=True), name="static_dashboard")
+
     return app
 
 

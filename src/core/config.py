@@ -27,17 +27,21 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://localhost:6379/0"
 
     # Trust Engine Parameters
-    TRUST_WEIGHT_CONSENSUS: float = Field(0.50, ge=0.0, le=1.0)
-    TRUST_WEIGHT_HISTORICAL: float = Field(0.30, ge=0.0, le=1.0)
-    TRUST_WEIGHT_PENALTY: float = Field(0.20, ge=0.0, le=1.0)
-    TRUST_DEFAULT_THRESHOLD: float = Field(0.65, ge=0.0, le=1.0)
+    TRUST_WEIGHT_CONSENSUS: float = Field(0.60, ge=0.0, le=1.0)
+    TRUST_WEIGHT_HISTORICAL: float = Field(0.25, ge=0.0, le=1.0)
+    TRUST_WEIGHT_PENALTY: float = Field(0.15, ge=0.0, le=1.0)
+    TRUST_DEFAULT_THRESHOLD: float = Field(0.50, ge=0.0, le=1.0)
     ROUTER_CONFIDENCE_THRESHOLD: float = Field(0.50, ge=0.0, le=1.0)
 
     # LLM Provider
-    LLM_PROVIDER: str = "mock"  # "mock", "openai", "anthropic", "ollama"
+    LLM_PROVIDER: str = "mock"  # "mock", "groq", "openai", "anthropic", "ollama"
+    GROQ_API_KEY: Optional[str] = None
+    GROQ_MODEL: str = "openai/gpt-oss-120b"
     OPENAI_API_KEY: Optional[str] = None
+    OPENAI_MODEL: str = "gpt-4o-mini"
     ANTHROPIC_API_KEY: Optional[str] = None
     LOCAL_OLLAMA_URL: str = "http://localhost:11434"
+    OLLAMA_MODEL: str = "llama3.1"
 
     # External Threat Intel Integrations
     VIRUSTOTAL_API_KEY: Optional[str] = None

@@ -97,8 +97,26 @@ export const AlertQueueView: React.FC<AlertQueueViewProps> = ({ alerts, onTriage
                         {alert.overall_verdict ? alert.overall_verdict.toUpperCase() : 'QUEUED'}
                       </span>
                     </td>
-                    <td className="px-5 py-4 whitespace-nowrap font-mono text-cyan-400 font-bold">
-                      {alert.trust_score !== undefined ? alert.trust_score.toFixed(3) : '—'}
+                    <td className="px-5 py-4 whitespace-nowrap font-mono">
+                      <div className="flex items-center gap-2">
+                        <span className={`font-bold ${
+                          alert.trust_score !== undefined && alert.trust_score >= 0.50
+                            ? 'text-emerald-400'
+                            : 'text-cyan-400'
+                        }`}>
+                          {alert.trust_score !== undefined ? alert.trust_score.toFixed(3) : '—'}
+                        </span>
+                        {alert.trust_score !== undefined && alert.trust_score >= 0.50 && (
+                          <span className="px-2 py-0.5 rounded text-[10px] font-sans font-bold bg-emerald-950/80 text-emerald-300 border border-emerald-700/60 uppercase">
+                            AUTO-PASSED
+                          </span>
+                        )}
+                        {alert.trust_score !== undefined && alert.trust_score < 0.50 && (
+                          <span className="px-2 py-0.5 rounded text-[10px] font-sans font-bold bg-amber-950/80 text-amber-300 border border-amber-700/60 uppercase">
+                            ESCALATED
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-5 py-4 whitespace-nowrap text-right">
                       <button

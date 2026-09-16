@@ -87,14 +87,14 @@ export const App: React.FC = () => {
       },
       {
         incident_id: 'INC-8894',
-        signature: 'Automated Cloud Deployment Pipeline',
+        signature: 'Automated Cloud Deployment Pipeline (Terraform CI/CD)',
         severity: 'low',
         source_format: 'synthetic',
         overall_verdict: 'benign',
-        trust_score: 0.892,
+        trust_score: 0.598,
         raw_payload: {
           source_format: 'synthetic',
-          signature: 'Automated Cloud Deployment Pipeline',
+          signature: 'Automated Cloud Deployment Pipeline (Terraform CI/CD)',
           raw_severity: 'low',
           cloud: {
             cloud_provider: 'AWS',
@@ -140,6 +140,19 @@ export const App: React.FC = () => {
             return [data.approval_request, ...filtered];
           });
         }
+        // Dynamically update the alert in the alerts queue with its live trust score and decision
+        setAlerts((prev) =>
+          prev.map((a) =>
+            a.signature === data.normalized_alert.signature || a.incident_id === data.incident_id
+              ? {
+                  ...a,
+                  overall_verdict: data.consensus_assessment.overall_verdict,
+                  trust_score: data.trust_assessment.trust_score,
+                  decision: data.trust_assessment.decision,
+                }
+              : a
+          )
+        );
         fetchMetrics();
         fetchAnalytics();
       }

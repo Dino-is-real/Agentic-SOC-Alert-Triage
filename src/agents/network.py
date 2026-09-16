@@ -4,8 +4,9 @@ from uuid import uuid4
 from src.domain.enums import AgentDomain, AgentVerdict, EvidenceType
 from src.domain.models import NormalizedAlert, AgentFinding, Evidence
 from src.agents.base import SpecialistAgent
+from src.core.config import settings
 from src.integrations.base import ThreatIntelProvider
-from src.integrations.abuseipdb import MockAbuseIPDBProvider
+from src.integrations.abuseipdb import AbuseIPDBProvider, MockAbuseIPDBProvider
 from src.integrations.llm import BaseLLMProvider, get_llm_provider
 
 
@@ -18,7 +19,12 @@ class NetworkSpecialistAgent(SpecialistAgent):
         llm: Optional[BaseLLMProvider] = None,
     ):
         super().__init__(domain=AgentDomain.NETWORK)
-        self.threat_intel = threat_intel or MockAbuseIPDBProvider()
+        if threat_intel:
+            self.threat_intel = threat_intel
+        elif settings.ABUSEIPDB_API_KEY and settings.ABUSEIPDB_API_KEY.strip():
+            self.threat_intel = AbuseIPDBProvider()
+        else:
+            self.threat_intel = MockAbuseIPDBProvider()
         self.llm = llm or get_llm_provider()
 
     async def analyze(

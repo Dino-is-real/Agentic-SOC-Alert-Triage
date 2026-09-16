@@ -3,7 +3,7 @@ from typing import Optional
 from uuid import UUID, uuid4
 from src.core.config import settings
 from src.core.logging import logger
-from src.domain.enums import AlertSeverity, TrustDecision
+from src.domain.enums import AlertSeverity, TrustDecision, AgentVerdict
 from src.domain.models import (
     ConsensusAssessment,
     TrustAssessment,
@@ -71,29 +71,41 @@ class TrustScoreEngine:
         """Evaluates closed-form Trust Score T and determines Gate 03 triage action."""
         C = max(0.0, min(1.0, consensus.consensus_score))
         H = max(0.0, min(1.0, historical_score))
-        S = self.compute_asset_severity_penalty(raw_severity, asset_criticality, is_privileged_user)
-
         w_C = self.weights.w_C
         w_H = self.weights.w_H
         w_S = self.weights.w_S
+        S = self.compute_asset_severity_penalty(raw_severity, asset_criticality, is_privileged_user)
+        reason_codes: list[str] = []
 
-        weighted_C = round(w_C * C, 4)
-        weighted_H = round(w_H * H, 4)
-        weighted_S = round(w_S * S, 4)
+        # Cold-Start Dynamic Normalization: If no historical cases exist, reallocate historical budget to consensus
+        if H == 0.0:
+            eff_w_C = round(w_C + w_H, 4)
+            eff_w_H = 0.0
+            reason_codes.append("RC_COLD_START_NO_HISTORY")
+        else:
+            eff_w_C = w_C
+            eff_w_H = w_H
+            if H >= 0.80:
+                reason_codes.append("RC_HIGH_HISTORICAL_MATCH")
+
+        # For verified benign activities, scale down asset penalty since no malicious attack is occurring
+        if consensus.overall_verdict == AgentVerdict.BENIGN:
+            S_eff = round(S * 0.5, 4)
+        else:
+            S_eff = S
+
+        weighted_C = round(eff_w_C * C, 4)
+        weighted_H = round(eff_w_H * H, 4)
+        weighted_S = round(w_S * S_eff, 4)
 
         raw_trust = weighted_C + weighted_H - weighted_S
         clamped_trust = round(max(0.0, min(1.0, raw_trust)), 4)
 
         # Generate Reason Codes
-        reason_codes: list[str] = []
         if C >= 0.85:
             reason_codes.append("RC_HIGH_CONSENSUS")
         if consensus.has_conflict:
             reason_codes.append("RC_AGENT_CONFLICT")
-        if H >= 0.80:
-            reason_codes.append("RC_HIGH_HISTORICAL_MATCH")
-        elif H == 0.0:
-            reason_codes.append("RC_COLD_START_NO_HISTORY")
         if S >= 0.70:
             reason_codes.append("RC_CRITICAL_ASSET_PENALTY")
         if single_agent_invoked:
